@@ -16,3 +16,6 @@ __pycache__/
 # Database
 *.db
 *.db-backup
+
+# Misc
+info_suggestions.txt
