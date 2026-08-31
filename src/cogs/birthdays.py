@@ -39,5 +39,14 @@ class Birthdays(commands.Cog):
 
         await ctx.channel.send(message)
 
+    @commands.command()
+    async def istodayyixisbirthday(ctx):
+        message = "no"
+        now = datetime.now(timezone.utc)
+        if now.month == 3 and now.day == 15:
+            message = "yes"
+
+        await ctx.channel.send(message)
+
 async def setup(bot):
     await bot.add_cog(Birthdays(bot))
