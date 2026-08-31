@@ -1,0 +1,18 @@
+# Virtual environment
+bin/
+include/
+lib/
+lib64
+pyvenv.cfg
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets
+.env
+
+# Database
+*.db
+*.db-backup
