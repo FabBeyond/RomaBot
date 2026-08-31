@@ -35,8 +35,6 @@ Create a `.env` file in the project root:
  
 ```env
 DISCORD_TOKEN=your-bot-token-here
-GUILD_ID=your-server-id-here
-DB_PATH=./data/romabot.db
 ```
 
 
