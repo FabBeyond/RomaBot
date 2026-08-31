@@ -40,7 +40,7 @@ class Birthdays(commands.Cog):
         await ctx.channel.send(message)
 
     @commands.command()
-    async def istodayyixisbirthday(ctx):
+    async def istodayyixisbirthday(self, ctx):
         message = "no"
         now = datetime.now(timezone.utc)
         if now.month == 3 and now.day == 15:
