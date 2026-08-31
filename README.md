@@ -34,7 +34,7 @@ pip install -r requirements.txt
 Create a `.env` file in the project root:
  
 ```env
-DISCORD_TOKEN=your-bot-token-here
+bot-token=your-bot-token-here
 ```
 
 
