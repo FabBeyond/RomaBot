@@ -8,6 +8,7 @@ import asyncio
 import os
 from constants import *
 
+# Checeks if user has a role, user is a Member object not ID!
 def user_has_role(user, role_id):
     try:
         if any(role.id == role_id for role in user.roles):
@@ -16,10 +17,12 @@ def user_has_role(user, role_id):
         print("AttributeError")
     return False
 
+# Gets the json as a python dict, filepath is without the "data/"
 def get_json(filepath):
     with open("src/data/" + filepath, "r") as f:
         return json.loads(f.read())
 
+# Checks if a user is a mod, user is a Member object not ID!
 def is_mod(user):
     return user_has_role(user, MOD_ROLE_ID)
 
@@ -32,12 +35,14 @@ class BotDatabase:
         self.data.row_factory = sql.Row
         self._create_tables()
 
+    # Creates the instance of the class
     @classmethod
     def instance(cls):
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
+    # Create the SQL tables if they dont exist yet
     def _create_tables(self):
         self.data.execute("""
         CREATE TABLE IF NOT EXISTS hof_messages (
@@ -73,7 +78,7 @@ class BotDatabase:
         )
         """)
 
-
+    # These should all be self explanitory
     def hof_message_exists(self, message_id):
         result = self.data.execute("SELECT EXISTS(SELECT 1 FROM hof_messages WHERE message_id=?)",
                                  (message_id,)).fetchone()

@@ -6,6 +6,7 @@ from constants import *
 
 db = BotDatabase.instance()
 
+# The commands should be self explanitory
 class Birthdays(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

@@ -26,11 +26,13 @@ last_ping = 0
 bot = commands.Bot(command_prefix='>', intents=intents)
 db = BotDatabase.instance()
 
+# Set up the extensions (cogs folder)
 @bot.event
 async def setup_hook():
     await bot.load_extension("cogs.gamble")
     await bot.load_extension("cogs.birthdays")
 
+# Class for the info command suggest form
 class InfoSuggestModal(discord.ui.Modal, title="Suggestion Form"):
     command = discord.ui.TextInput(
         label="Command",
@@ -48,6 +50,7 @@ class InfoSuggestModal(discord.ui.Modal, title="Suggestion Form"):
             f.write(f"{self.command.value} | {self.output.value}\n")
             await interaction.response.send_message("Suggestion sent!", ephemeral=True)
 
+# Opens the info command suggest form
 class OpenSuggest(discord.ui.View):
     @discord.ui.button(label="Open Form", style=discord.ButtonStyle.primary)
     async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -101,6 +104,7 @@ async def files(ctx):
 
 @bot.listen()
 async def on_message(message):
+    # If user is mod dont react to the message in hall of fame submissions
     if user_has_role(message.author, MOD_ROLE_ID):
         if message.content.startswith("!NR"):
             return
@@ -113,6 +117,8 @@ async def on_message(message):
 
     if message.channel.id == HOF_SUBMISSION_CHANNEL_ID:
         await message.add_reaction("\u2b50")
+
+# Logic for hall of fame submissions reaction count and sending to hof
 @bot.listen()
 async def on_raw_reaction_add(payload):
     if payload.user_id == bot.user.id:
@@ -151,6 +157,7 @@ async def on_raw_reaction_add(payload):
 
     db.add_hof_message(message.id)
     await target_channel.send(embeds=embeds)
+
 @bot.event
 async def on_member_join(member):
     roles = await member.guild.fetch_roles()
@@ -199,6 +206,7 @@ async def on_message(message):
     if message.author.id != ARCANE_USER_ID:
         return
 
+    # Ping for level up if user has role
     match = re.match(r"^@(\S+) has reached level \*\*(\d+)\*\*\. GG!$", message.content)
     if match:
         username, level = match.groups()
@@ -213,6 +221,7 @@ async def on_message(message):
             await message.channel.send(f"{member.mention} has reached level **{level}**. GG!")
             await message.delete()
 
+# Error commands
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
