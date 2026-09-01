@@ -67,7 +67,8 @@ async def info(ctx, *, topic):
         for info in get_json("general_info.json")["info_command"].keys():
             message += f"`{info}`, "
 
-        await ctx.channel.send(message[:-2])
+        message = await ctx.channel.send(message[:-2], suppress=True)
+        message.edit(suppress=True)
         return
 
     try:
