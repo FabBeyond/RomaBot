@@ -68,7 +68,6 @@ async def info(ctx, *, topic):
             message += f"`{info}`, "
 
         message = await ctx.channel.send(message[:-2], suppress=True)
-        message.edit(suppress=True)
         return
 
     try:
