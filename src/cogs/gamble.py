@@ -103,7 +103,7 @@ class HigherOrLower(discord.ui.View):
             message = await interaction.client.wait_for("message", check=check, timeout=60.0)
 
             if message.lower() == "higher" and new_number > number:
-                pass
+                
             else if message.lower() == "lower" and new_number < number:
                 pass
             else:
