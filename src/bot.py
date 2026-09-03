@@ -102,22 +102,6 @@ async def files(ctx):
     await ctx.send("You can find most files, such as instrumentals, .svp, vocals, etc. [here](https://drive.google.com/drive/folders/1w8VHY8J7a_llbiE6TzgtPXetDUyfEBYw?usp=drive_link)." + 
                    " If something is missing please ask Roma to add it.",)
 
-@bot.listen()
-async def on_message(message):
-    # If user is mod dont react to the message in hall of fame submissions
-    if user_has_role(message.author, MOD_ROLE_ID):
-        if message.content.startswith("!NR"):
-            return
-
-    if message.channel.id == HOF_SUBMISSION_CHANNEL_ID:
-        if len(message.attachments) == 0:
-            if not user_has_role(message.author, MOD_ROLE_ID):
-                await message.delete()
-                return
-
-    if message.channel.id == HOF_SUBMISSION_CHANNEL_ID:
-        await message.add_reaction("\u2b50")
-
 # Logic for hall of fame submissions reaction count and sending to hof
 @bot.listen()
 async def on_raw_reaction_add(payload):
@@ -165,24 +149,37 @@ async def on_member_join(member):
     if role is not None:
         await member.add_roles(role, reason="Auto-role on join")
 
-@bot.listen
-async def on_message_edit(before, after):
-    keywords = ["*you're", "you're*", "*your", "your*"]
-    for keyword in keywords:
-        if keyword in after.content.lower():
-            await after.channel.send("Don't be a bum")
-            await after.delete()
-
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
 
-    if not message.author.bot:
-        keywords = ["*you're", "you're*", "*your", "your*"]
-        for keyword in keywords:
-            if keyword in message.content.lower():
-                await message.channel.send("Don't be a bum")
+    if message.author.id == ARCANE_USER_ID:
+        match = re.match(r"^@(\S+) has reached level \*\*(\d+)\*\*\. GG!$", message.content)
+        if match:
+            username, level = match.groups()
+            member = discord.utils.get(message.guild.members, name=username)
+            if member:
+                if not user_has_role(member, LEVELUPPING_ROLE_ID):
+                    await message.channel.send(f"{member.display_name} has reached level **{level}**. GG!")
+                    await message.delete()
+                    return
+                await message.channel.send(f"{member.mention} has reached level **{level}**. GG!")
                 await message.delete()
+        return
+
+    if message.author.bot:
+        return
+
+    if user_has_role(message.author, MOD_ROLE_ID):
+        if message.content.startswith("!NR"):
+            return
+
+    if message.channel.id == HOF_SUBMISSION_CHANNEL_ID:
+        if len(message.attachments) == 0:
+            if not user_has_role(message.author, MOD_ROLE_ID):
+                await message.delete()
+                return
+        await message.add_reaction("⭐")
 
     if message.channel.id == HONEYPOT_CHANNEL_ID:
         if user_has_role(message.author, MOD_ROLE_ID):
@@ -201,25 +198,6 @@ async def on_message(message):
             print(2)
         return
 
-    date = message.created_at.timestamp()
-
-    if message.author.id != ARCANE_USER_ID:
-        return
-
-    # Ping for level up if user has role
-    match = re.match(r"^@(\S+) has reached level \*\*(\d+)\*\*\. GG!$", message.content)
-    if match:
-        username, level = match.groups()
-
-        member = discord.utils.get(message.guild.members, name=username)
-        if member:
-            if not user_has_role(member, LEVELUPPING_ROLE_ID):
-                await message.channel.send(f"{member.display_name} has reached level **{level}**. GG!")
-                await message.delete()
-                return
-
-            await message.channel.send(f"{member.mention} has reached level **{level}**. GG!")
-            await message.delete()
 
 @bot.event
 async def on_member_ban(guild, user):
