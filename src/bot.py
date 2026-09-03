@@ -223,9 +223,23 @@ async def on_message(message):
 
 @bot.event
 async def on_member_ban(guild, user):
-    async for entry in guild.audit_logs(action=discord.AudiLlogAction.ban, limit=1):
-        reason = entry.reason
-        await user.send(f"You were banned from ROMA GANG for: {reason}")
+    async for entry in guild.audit_logs(action=discord.AuditLogAction.ban, limit=1):
+        if entry.target.id == user.id:
+            reason = entry.reason
+            try:
+                await user.send(f"You were banned from ROMA GANG for: {reason}")
+            except discord.Forbidden:
+                pass
+
+@bot.event
+async def on_member_remove(member):
+    async for entry in member.guild.audit_logs(action=discord.AuditLogAction.kick, limit=1):
+        if entry.target.id == member.id:
+            reason = entry.reason
+            try:
+                await member.send(f"You were kicked from ROMA GANG for: {reason}")
+            except discord.Forbidden:
+                pass
 
 # Error commands
 @bot.event
