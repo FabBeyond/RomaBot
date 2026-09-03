@@ -221,6 +221,12 @@ async def on_message(message):
             await message.channel.send(f"{member.mention} has reached level **{level}**. GG!")
             await message.delete()
 
+@bot.event
+async def on_member_ban(guild, user):
+    async for entry in guild.audit_logs(action=discord.AudiLlogAction.ban, limit=1):
+        reason = entry.reason
+        await user.send(f"You were banned from ROMA GANG for: {reason}")
+
 # Error commands
 @bot.event
 async def on_command_error(ctx, error):
