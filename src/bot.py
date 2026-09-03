@@ -67,7 +67,7 @@ async def info(ctx, *, topic):
         for info in get_json("general_info.json")["info_command"].keys():
             message += f"`{info}`, "
 
-        message = await ctx.channel.send(message[:-2], suppress=True)
+        message = await ctx.channel.send(message[:-2])
         return
 
     try:
@@ -228,9 +228,9 @@ async def on_command_error(ctx, error):
         await ctx.send("I-Im not gonna answer that *b-baka*!")
         await ctx.send("https://klipy.com/gifs/anime-tsundere-6")
     else:
-        log(error)
+        await log(ctx, error)
 
-async def log(error):
+async def log(ctx, error):
     import traceback
     tb_text = "".join(traceback.format_exception(type(error), error, error.__traceback__))
     log_message = f"```py\n{tb_text}\n```"
@@ -240,7 +240,7 @@ async def log(error):
 
     channel = await bot.fetch_channel(BOT_LOG_CHANNEL)
     message = await channel.send(log_message)
-    await channel.send(f"An error occurred > {message.jump_url} <@852911970118271016>")
+    await ctx.channel.send(f"An error occurred > {message.jump_url} <@852911970118271016>")
 
 
 bot.run(token)
