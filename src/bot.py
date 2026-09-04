@@ -170,6 +170,13 @@ async def on_message(message):
     if message.author.bot:
         return
 
+    if random.randint(1, 1000) == 1:
+        rand = random.randint(1, 2)
+        if rand == 1:
+            await message.channel.send("Want a break from the ads? Buy ROMA BOT premium!")
+        elif rand == 2:
+            await message.channel.send("Subscribe to ROMA on Youtube!!!! https://www.youtube.com/@ROMALOID")
+
     if user_has_role(message.author, MOD_ROLE_ID):
         if message.content.startswith("!NR"):
             return
