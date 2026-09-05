@@ -42,13 +42,19 @@ class InfoSuggestModal(discord.ui.Modal, title="Suggestion Form"):
     output = discord.ui.TextInput(
         label="Output",
         placeholder="Enter the output of that command",
-        max_length=100
+        max_length=200
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        with open("src/info_suggestions.txt", "a") as f:
-            f.write(f"{self.command.value} | {self.output.value}\n")
-            await interaction.response.send_message("Suggestion sent!", ephemeral=True)
+        data = get_json("general_info.json")
+        if self.command.value in data["info_command"]:
+            await interaction.response.send_message("Command already exists!", ephemeral=True)
+            return
+
+        fab = await bot.fetch_user(FAB_USER_ID)
+        await fab.send(f"{interaction.user.name} suggested:\n" + \
+            f"`{self.command.value}` | `{self.output.value}`")
+        await interaction.response.send_message("Suggestion sent!", ephemeral=True)
 
 # Opens the info command suggest form
 class OpenSuggest(discord.ui.View):
@@ -105,6 +111,15 @@ async def files(ctx):
 # Logic for hall of fame submissions reaction count and sending to hof
 @bot.listen()
 async def on_raw_reaction_add(payload):
+    if payload.guild_id is None:
+        channel = await bot.fetch_channel(payload.channel_id)
+        if isinstance(channel, discord.DMChannel) and channel.recipient.id == FAB_USER_ID:
+            message = await channel.fetch_message(payload.message_id)
+            com, out = message.content.replace("`", "").split("\n")[1].split(" | ")
+            data = get_json("general_info.json")
+            data["info_command"][com] = out
+            write_json("general_info.json", data)
+
     if payload.user_id == bot.user.id:
         return
     if payload.channel_id != HOF_SUBMISSION_CHANNEL_ID:
