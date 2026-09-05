@@ -17,8 +17,11 @@ __pycache__/
 *.db
 *.db-backup
 
-# Misc
-info_suggestions.txt
+# Flake
+flake.*
+
+# .direnv
+.direnv/
 
 # sqlite DB
 src/bot.db
