@@ -35,7 +35,7 @@ class BotDatabase:
     def __init__(self):
         if BotDatabase._instance is not None:
             raise RuntimeError("Use BotDatabase.instance()")
-        self.data = sql.connect("src/bot.db", check_same_thread=False)
+        self.data = sql.connect("src/bot.db", check_same_thread=False) # Won't change this now but you might want to put the db in it's own state dir that's gitignored and also you might want the DB path to be a env var
         self.data.row_factory = sql.Row
         self._create_tables()
 

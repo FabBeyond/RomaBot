@@ -1,19 +1,15 @@
-from dataclasses import dataclass
-import discord
-from discord.ext import commands
-import sqlite3 as sql
-import time
-from utils import *
-from constants import *
-import random
-import json
-import re
-import threading
-import asyncio
 import os
-from dotenv import load_dotenv
+import random
+import re
+import time
 from datetime import datetime, timedelta, timezone
 
+import discord
+from discord.ext import commands
+from dotenv import load_dotenv
+
+from constants import *
+from utils import *
 
 load_dotenv()
 token = os.getenv("bot-token")
@@ -68,20 +64,21 @@ async def suggest(ctx):
 
 @bot.command()
 async def info(ctx, *, topic):
+    data = get_json("general_info.json")["info_command"]
     if topic == "help":
         message = "Available info commands: "
-        for info in get_json("general_info.json")["info_command"].keys():
-            message += f"`{info}`, "
+        for info_field in data:
+            message += f"`{info_field}`, "
 
         message = await ctx.channel.send(message[:-2])
         return
 
     try:
-        response = get_json("general_info.json")["info_command"][topic]
+        response = data[topic]
 
         if not isinstance(response, str):
             response = response[random.randint(0, len(response)-1)]
-    except:
+    except (KeyError, ValueError):
         response = f"Found no info on {topic}. All info commands can be found with `>info help`\nYou can also suggest a new one using `>suggest`"
 
     await ctx.channel.send(response)
@@ -93,7 +90,7 @@ async def chatrevive(ctx):
     global last_ping
 
     if (last_ping + CHAT_REVIVE_TIMEOUT < time.time()):
-        role = ctx.guild.get_role(1529912646248435803)
+        role = ctx.guild.get_role(1529912646248435803) # FIX: magic variable
         await ctx.channel.send(f"{role.mention}")
         last_ping = time.time()
     else:
@@ -124,12 +121,12 @@ async def on_raw_reaction_add(payload):
         return
     if payload.channel_id != HOF_SUBMISSION_CHANNEL_ID:
         return
-    if str(payload.emoji) != "\u2b50":
+    if str(payload.emoji) != "\u2b50": # Star Emoji
         return
     channel = bot.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
     reaction = discord.utils.get(message.reactions, emoji="\u2b50")
-    if reaction and reaction.count <= HOF_SUBMISSION_REACTIONS:
+    if not reaction or reaction.count <= HOF_SUBMISSION_REACTIONS:
         return
     if db.hof_message_exists(reaction.message.id):
         return
@@ -192,16 +189,14 @@ async def on_message(message):
         elif rand == 2:
             await message.channel.send("Subscribe to ROMA on Youtube!!!! https://www.youtube.com/@ROMALOID")
 
-    if user_has_role(message.author, MOD_ROLE_ID):
-        if message.content.startswith("!NR"):
-            return
-
+    if (
+        message.channel.id == HOF_SUBMISSION_CHANNEL_ID
+        and len(message.attachments) == 0
+    ):
+          await message.delete()
+          return
     if message.channel.id == HOF_SUBMISSION_CHANNEL_ID:
-        if len(message.attachments) == 0:
-            if not user_has_role(message.author, MOD_ROLE_ID):
-                await message.delete()
-                return
-        await message.add_reaction("⭐")
+      await message.add_reaction("⭐")
 
     if message.channel.id == HONEYPOT_CHANNEL_ID:
         if user_has_role(message.author, MOD_ROLE_ID):
@@ -219,7 +214,6 @@ async def on_message(message):
         except discord.HTTPException:
             print(2)
         return
-
 
 @bot.event
 async def on_member_ban(guild, user):
