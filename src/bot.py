@@ -38,13 +38,19 @@ class InfoSuggestModal(discord.ui.Modal, title="Suggestion Form"):
     output = discord.ui.TextInput(
         label="Output",
         placeholder="Enter the output of that command",
-        max_length=100
+        max_length=200
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        with open("src/info_suggestions.txt", "a") as f:  # noqa: ASYNC230 -- If the json grows or this bot scales to more servers you should move to an async system
-            f.write(f"{self.command.value} | {self.output.value}\n")
-            await interaction.response.send_message("Suggestion sent!", ephemeral=True)
+        data = get_json("general_info.json")
+        if self.command.value in data["info_command"]:
+            await interaction.response.send_message("Command already exists!", ephemeral=True)
+            return
+
+        fab = await bot.fetch_user(FAB_USER_ID)
+        await fab.send(f"{interaction.user.name} suggested:\n" + \
+            f"`{self.command.value}` | `{self.output.value}`")
+        await interaction.response.send_message("Suggestion sent!", ephemeral=True)
 
 # Opens the info command suggest form
 class OpenSuggest(discord.ui.View):
@@ -64,7 +70,7 @@ async def info(ctx, *, topic):
         for info_field in data:
             message += f"`{info_field}`, "
 
-        message = await ctx.channel.send(message[:-2], suppress=True)
+        message = await ctx.channel.send(message[:-2])
         return
 
     try:
@@ -99,30 +105,18 @@ async def files(ctx):
     await ctx.send("You can find most files, such as instrumentals, .svp, vocals, etc. [here](https://drive.google.com/drive/folders/1w8VHY8J7a_llbiE6TzgtPXetDUyfEBYw?usp=drive_link)." + 
                    " If something is missing please ask Roma to add it.",)
 
-@bot.listen()
-async def on_message(message):
-    # If user is mod dont react to the message in hall of fame submissions
-    if (
-        user_has_role(message.author, MOD_ROLE_ID)
-        and message.content.startswith("!NR")
-    ):
-        return
-
-    if (
-        message.channel.id == HOF_SUBMISSION_CHANNEL_ID
-        and len(message.attachments) == 0
-        and not user_has_role(message.author, MOD_ROLE_ID)
-    ):
-        await message.delete()
-        return
-
-
-    if message.channel.id == HOF_SUBMISSION_CHANNEL_ID:
-        await message.add_reaction("\u2b50")
-
 # Logic for hall of fame submissions reaction count and sending to hof
 @bot.listen()
 async def on_raw_reaction_add(payload):
+    if payload.guild_id is None:
+        channel = await bot.fetch_channel(payload.channel_id)
+        if isinstance(channel, discord.DMChannel) and channel.recipient.id == FAB_USER_ID:
+            message = await channel.fetch_message(payload.message_id)
+            com, out = message.content.replace("`", "").split("\n")[1].split(" | ")
+            data = get_json("general_info.json")
+            data["info_command"][com] = out
+            write_json("general_info.json", data)
+
     if payload.user_id == bot.user.id:
         return
     if payload.channel_id != HOF_SUBMISSION_CHANNEL_ID:
@@ -167,24 +161,42 @@ async def on_member_join(member):
     if role is not None:
         await member.add_roles(role, reason="Auto-role on join")
 
-@bot.listen()
-async def on_message_edit(before, after):
-    keywords = ["*you're", "you're*", "*your", "your*"]
-    for keyword in keywords:
-        if keyword in after.content.lower():
-            await after.channel.send("Don't be a bum")
-            await after.delete()
-
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
 
-    if not message.author.bot:
-        keywords = ["*you're", "you're*", "*your", "your*"]
-        for keyword in keywords:
-            if keyword in message.content.lower():
-                await message.channel.send("Don't be a bum")
+    if message.author.id == ARCANE_USER_ID:
+        match = re.match(r"^@(\S+) has reached level \*\*(\d+)\*\*\. GG!$", message.content)
+        if match:
+            username, level = match.groups()
+            member = discord.utils.get(message.guild.members, name=username)
+            if member:
+                if not user_has_role(member, LEVELUPPING_ROLE_ID):
+                    await message.channel.send(f"{member.display_name} has reached level **{level}**. GG!")
+                    await message.delete()
+                    return
+                await message.channel.send(f"{member.mention} has reached level **{level}**. GG!")
                 await message.delete()
+        return
+
+    if message.author.bot:
+        return
+
+    if random.randint(1, 1000) == 1:
+        rand = random.randint(1, 2)
+        if rand == 1:
+            await message.channel.send("Want a break from the ads? Buy ROMA BOT premium!")
+        elif rand == 2:
+            await message.channel.send("Subscribe to ROMA on Youtube!!!! https://www.youtube.com/@ROMALOID")
+
+    if (
+        message.channel.id == HOF_SUBMISSION_CHANNEL_ID
+        and len(message.attachments) == 0
+    ):
+          await message.delete()
+          return
+    if message.channel.id == HOF_SUBMISSION_CHANNEL_ID:
+      await message.add_reaction("⭐")
 
     if message.channel.id == HONEYPOT_CHANNEL_ID:
         if user_has_role(message.author, MOD_ROLE_ID):
@@ -203,25 +215,25 @@ async def on_message(message):
             print(2)
         return
 
-    # date = message.created_at.timestamp() # Unused var (not sure if you plan to use it for smt later)
+@bot.event
+async def on_member_ban(guild, user):
+    async for entry in guild.audit_logs(action=discord.AuditLogAction.ban, limit=1):
+        if entry.target.id == user.id:
+            reason = entry.reason
+            try:
+                await user.send(f"You were banned from ROMA GANG for: {reason}")
+            except discord.Forbidden:
+                pass
 
-    if message.author.id != ARCANE_USER_ID:
-        return
-
-    # Ping for level up if user has role
-    match = re.match(r"^@(\S+) has reached level \*\*(\d+)\*\*\. GG!$", message.content)
-    if match:
-        username, level = match.groups()
-
-        member = discord.utils.get(message.guild.members, name=username)
-        if member:
-            if not user_has_role(member, LEVELUPPING_ROLE_ID):
-                await message.channel.send(f"{member.display_name} has reached level **{level}**. GG!")
-                await message.delete()
-                return
-
-            await message.channel.send(f"{member.mention} has reached level **{level}**. GG!")
-            await message.delete()
+@bot.event
+async def on_member_remove(member):
+    async for entry in member.guild.audit_logs(action=discord.AuditLogAction.kick, limit=1):
+        if entry.target.id == member.id:
+            reason = entry.reason
+            try:
+                await member.send(f"You were kicked from ROMA GANG for: {reason}")
+            except discord.Forbidden:
+                pass
 
 # Error commands
 @bot.event
@@ -232,9 +244,9 @@ async def on_command_error(ctx, error):
         await ctx.send("I-Im not gonna answer that *b-baka*!")
         await ctx.send("https://klipy.com/gifs/anime-tsundere-6")
     else:
-        log(error)
+        await log(ctx, error)
 
-async def log(error):
+async def log(ctx, error):
     import traceback
     tb_text = "".join(traceback.format_exception(type(error), error, error.__traceback__))
     log_message = f"```py\n{tb_text}\n```"
@@ -244,7 +256,7 @@ async def log(error):
 
     channel = await bot.fetch_channel(BOT_LOG_CHANNEL)
     message = await channel.send(log_message)
-    await channel.send(f"An error occurred > {message.jump_url} <@852911970118271016>")
+    await ctx.channel.send(f"An error occurred > {message.jump_url} <@852911970118271016>")
 
 
 bot.run(token)

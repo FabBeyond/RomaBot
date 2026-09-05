@@ -22,6 +22,10 @@ def get_json(filepath):
     with open("src/data/" + filepath, "r") as f:
         return json.loads(f.read())
 
+def write_json(filepath, content):
+    with open("src/data/" + filepath, "w") as f:
+        f.write(json.dumps(content, indent=4))
+
 # Checks if a user is a mod, user is a Member object not ID!
 def is_mod(user):
     return user_has_role(user, MOD_ROLE_ID)
