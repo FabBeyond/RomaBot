@@ -48,3 +48,8 @@ Else:
 ```bash
 python bot.py
 ```
+
+# Credits
+Anything not listed here was done by Fab
+- [hexolexo](https://github.com/hexolexo)
+  - General code cleanup
