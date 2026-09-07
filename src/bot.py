@@ -183,11 +183,13 @@ async def on_message(message):
         return
 
     if random.randint(1, 1000) == 1:
-        rand = random.randint(1, 2)
+        rand = random.randint(1, 5)
         if rand == 1:
             await message.channel.send("Want a break from the ads? Buy ROMA BOT premium!")
         elif rand == 2:
             await message.channel.send("Subscribe to ROMA on Youtube!!!! https://www.youtube.com/@ROMALOID")
+        elif rand > 2:
+            await message.channel.send("Buy some poteto chips!\n https://www.romaloid.com/potetochips")
 
     if (
         message.channel.id == HOF_SUBMISSION_CHANNEL_ID
