@@ -84,6 +84,10 @@ async def info(ctx, *, topic):
     await ctx.channel.send(response)
 
 @bot.command()
+async def potetochips(ctx):
+    await ctx.channel.send("Buy some poteto chips!\n https://www.romaloid.com/potetochips")
+
+@bot.command()
 async def chatrevive(ctx):
     if ctx.channel.id == ANNOUNCEMENTS_CHANNEL_ID:
         return
