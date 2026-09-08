@@ -1,10 +1,10 @@
+import random
+
 import discord
 from discord.ext import commands
 
 from constants import *
 from utils import *
-from constants import *
-import random
 
 db = BotDatabase.instance()
 
@@ -33,6 +33,10 @@ class GambleButtons(discord.ui.View):
             amount = int(reply.content)
         except ValueError:
             await reply.reply("Please restart and enter numbers only.")
+            return
+
+        if amount <= 0:
+            await reply.reply("Nice try :3")
             return
 
         data = db.get_user(interaction.user.id, interaction.guild.id)
@@ -89,27 +93,55 @@ class HigherOrLower(discord.ui.View):
         def check(m):
             return m.author == interaction.user and m.channel == interaction.channel
 
+        data = db.get_user(interaction.user.id, interaction.guild.id)
+        if data["points"] < 100:
+            await interaction.response.send_message("You don't have enough money")
+            return
+
+
         await interaction.response.send_message("Lets go!")
         message = await interaction.original_response()
         number = random.randint(0, 100)
+
         while True:
-            new_number = random.randint(0, 100)
             embed = discord.Embed(
                 title="Higher or Lower",
-                description=number,
+                description=str(number),
                 color=discord.Color.blue()
             )
 
             message = await message.reply(embed=embed)
+            
+            try:
+                reply = await interaction.client.wait_for("message", check=check, timeout=60.0)
+            except TimeoutError:
+                await message.reply("Cashing out... *coward*")
+                return
 
-            message = await interaction.client.wait_for("message", check=check, timeout=60.0)
+            content = reply.content.lower()
 
-            if message.lower() == "higher" and new_number > number:
-                pass
-            elif message.lower() == "lower" and new_number < number:
-                pass
+            if content == "quit":
+                await message.reply("You know 99% of gamblers quit before they win big")
+                return
+
+            if content not in ("higher", "lower"):
+                await message.reply("Type `higher`, `lower`, or `quit`.")
+                continue
+
+            new_number = random.randint(0, 100)
+            won = (content == "higher" and new_number > number) or (content == "lower" and new_number < number) # *Slight* house edge here so points will trend down on average with ideal play 
+            if won:
+                await message.reply("You win, +100 money")
+                db.update_points(interaction.guild.id, interaction.user.id, 100)
             else:
-                pass
+                await message.reply("You lose, -100 money")
+                db.update_points(interaction.guild.id, interaction.user.id, -100)
+                data = db.get_user(interaction.user.id, interaction.guild.id)
+                if data["points"] < 100:
+                    await message.reply("You don't have enough money to keep playing")
+                    return
+            number = new_number
+
 
 class ModTools(discord.ui.View):
     def __init__(self, bot, author_id, channel):
@@ -133,8 +165,11 @@ class ModTools(discord.ui.View):
         amount = 0
         try:
             amount = int(reply.content)
-        except Exception:
+        except ValueError:
             await reply.reply("Please restart and enter numbers only.")
+            return
+        if amount <= 0:
+            await reply.reply("Nice try :3")
             return
 
         await reply.reply("Please type the username (not display name) of the person you want to give money to")
