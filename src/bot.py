@@ -69,8 +69,6 @@ async def info(ctx, *, topic):
         message = "Available info commands: "
         for info_field in data:
             message += f"`{info_field}`, "
-
-        message = await ctx.channel.send(message[:-2])
         return
 
     try:
@@ -114,20 +112,22 @@ async def files(ctx):
 async def on_raw_reaction_add(payload):
     if payload.guild_id is None:
         channel = await bot.fetch_channel(payload.channel_id)
-        if isinstance(channel, discord.DMChannel) and channel.recipient.id == FAB_USER_ID:
+        if isinstance(channel, discord.DMChannel) and channel.recipient and channel.recipient.id == FAB_USER_ID:
             message = await channel.fetch_message(payload.message_id)
             com, out = message.content.replace("`", "").split("\n")[1].split(" | ")
             data = get_json("general_info.json")
             data["info_command"][com] = out
             write_json("general_info.json", data)
 
-    if payload.user_id == bot.user.id:
+    if bot.user is not None and payload.user_id == bot.user.id:
         return
     if payload.channel_id != HOF_SUBMISSION_CHANNEL_ID:
         return
     if str(payload.emoji) != "\u2b50": # Star Emoji
         return
     channel = bot.get_channel(payload.channel_id)
+    if not isinstance(channel, (discord.TextChannel, discord.Thread, discord.VoiceChannel, discord.StageChannel, discord.DMChannel, discord.GroupChannel)):
+        return
     message = await channel.fetch_message(payload.message_id)
     reaction = discord.utils.get(message.reactions, emoji="\u2b50")
     if not reaction or reaction.count <= HOF_SUBMISSION_REACTIONS:
@@ -153,9 +153,11 @@ async def on_raw_reaction_add(payload):
     for attachment in message.attachments[1:]:
         img_embed = discord.Embed(color=discord.Color.gold())
         img_embed.set_image(url=attachment.url)
-        embeds.appends(img_embed)
+        embeds.append(img_embed)
 
     db.add_hof_message(message.id)
+    if not isinstance(target_channel, (discord.TextChannel, discord.Thread, discord.VoiceChannel, discord.StageChannel, discord.DMChannel, discord.GroupChannel)):
+        return
     await target_channel.send(embeds=embeds)
 
 @bot.event
@@ -261,8 +263,11 @@ async def log(ctx, error):
          log_message = log_message[:1990] + "\n...```"
 
     channel = await bot.fetch_channel(BOT_LOG_CHANNEL)
+    if not isinstance(channel, (discord.TextChannel, discord.Thread, discord.VoiceChannel, discord.StageChannel)):
+        return
     message = await channel.send(log_message)
     await ctx.channel.send(f"An error occurred > {message.jump_url} <@852911970118271016>")
 
-
+if token is None:
+    raise RuntimeError("DISCORD_TOKEN is not set")
 bot.run(token)

@@ -1,8 +1,10 @@
+import random
+
 import discord
 from discord.ext import commands
-from utils import *
+
 from constants import *
-import random
+from utils import *
 
 db = BotDatabase.instance()
 
@@ -29,7 +31,7 @@ class GambleButtons(discord.ui.View):
         amount = 0
         try:
             amount = int(reply.content)
-        except Exception:
+        except ValueError:
             await reply.reply("Please restart and enter numbers only.")
             return
 
@@ -102,9 +104,7 @@ class HigherOrLower(discord.ui.View):
 
             message = await interaction.client.wait_for("message", check=check, timeout=60.0)
 
-            if message.lower() == "higher" and new_number > number:
-                pass
-            elif message.lower() == "lower" and new_number < number:
+            if message.lower() == "higher" and new_number > number or message.lower() == "lower" and new_number < number:
                 pass
             else:
                 pass
@@ -131,7 +131,7 @@ class ModTools(discord.ui.View):
         amount = 0
         try:
             amount = int(reply.content)
-        except Exception:
+        except ValueError:
             await reply.reply("Please restart and enter numbers only.")
             return
 
