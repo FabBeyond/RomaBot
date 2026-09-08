@@ -1,5 +1,7 @@
 import discord
 from discord.ext import commands
+
+from constants import *
 from utils import *
 from constants import *
 import random
@@ -29,7 +31,7 @@ class GambleButtons(discord.ui.View):
         amount = 0
         try:
             amount = int(reply.content)
-        except Exception:
+        except ValueError:
             await reply.reply("Please restart and enter numbers only.")
             return
 
