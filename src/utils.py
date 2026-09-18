@@ -1,12 +1,8 @@
-import sqlite3 as sql
-import discord
-import time
-import difflib
 import json
-import re
-import asyncio
-import os
+import sqlite3 as sql
+
 from constants import *
+
 
 # Checeks if user has a role, user is a Member object not ID!
 def user_has_role(user, role_id):

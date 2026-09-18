@@ -13,18 +13,13 @@ __pycache__/
 # Secrets
 .env
 
+# LSP/Tools
+.ruff_cache/
+.venv/
+
 # Database
 *.db
 *.db-backup
-
-# Flake
-flake.*
-
-# .direnv
-.direnv/
-
-# sqlite DB
-src/bot.db
-src/bot.db-journal
-src/bot.db-wal
-src/bot.db-shm
+*.db-journal
+*.db-wal
+*.db-shm
