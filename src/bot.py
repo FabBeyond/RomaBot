@@ -185,10 +185,13 @@ async def check_for_slurs(message):
     if message.author.bot: return
 
     results = Detoxify("unbiased").predict(message.content)
-    if (results["identity_attack"] >= 0.3):
-        await message.delete()
-        await message.author.send(
-            f"""Your message '{message.content}' has been flagged for being offensive.
+    if (results["identity_attack"] >= 0.5):
+        with open("src/data/bad_words.txt", "r") as f:
+            for line in f.readlines():
+                if line.strip() in message.content:
+                    await message.delete()
+                    await message.author.send(
+                        f"""Your message '{message.content}' has been flagged for being offensive.
 If you believe this to be a mistake please press the button below""", view=ReportSlurDetection(message.content))
 
 @bot.event
