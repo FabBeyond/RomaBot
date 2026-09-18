@@ -53,3 +53,5 @@ python bot.py
 Anything not listed here was done by Fab
 - [hexolexo](https://github.com/hexolexo)
   - General code cleanup
+- Bad word list
+  - [GitHub](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/blob/master/en)
