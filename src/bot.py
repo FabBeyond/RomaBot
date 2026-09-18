@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from detoxify import Detoxify
 
 from constants import *
 from utils import *
@@ -165,9 +166,34 @@ async def on_member_join(member):
     if role is not None:
         await member.add_roles(role, reason="Auto-role on join")
 
+class ReportSlurDetection(discord.ui.View):
+    def __init__(self, message):
+        super().__init__()
+        self.message = message
+
+    @discord.ui.button(label="Report Mistake", style=discord.ButtonStyle.blurple)
+    async def report_mistake_button(self, interaction, button):
+        channel = await interaction.client.fetch_channel(MOD_CHAT_CHANNEL_ID)
+        await channel.send(
+            f"""{interaction.user.mention} has reported '{self.message}' as wrongly reported as hostile"""
+        )
+        await interaction.response.send_message("Successfully reported")
+
+async def check_for_slurs(message):
+    if message.author.bot: return
+
+    results = Detoxify("unbiased").predict(message.content)
+    if (results["identity_attack"] >= 0.3):
+        await message.delete()
+        await message.author.send(
+            f"""Your message '{message.content}' has been flagged for being offensive.
+If you believe this to be a mistake please press the button below""", view=ReportSlurDetection(message.content))
+
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
+
+    await check_for_slurs(message)
 
     if message.author.id == ARCANE_USER_ID:
         match = re.match(r"^@(\S+) has reached level \*\*(\d+)\*\*\. GG!$", message.content)
