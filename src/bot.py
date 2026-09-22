@@ -83,6 +83,7 @@ async def info(ctx, *, topic):
         message = "Available info commands: "
         for info_field in data:
             message += f"`{info_field}`, "
+        await ctx.channel.send(message)
         return
 
     try:
