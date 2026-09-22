@@ -7,7 +7,6 @@ from datetime import datetime, timedelta, timezone
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from detoxify import Detoxify
 
 from constants import *
 from utils import *
@@ -62,6 +61,20 @@ class OpenSuggest(discord.ui.View):
 @bot.command()
 async def suggest(ctx):
     await ctx.channel.send("Click to suggest an info command", view=OpenSuggest())
+
+@bot.command()
+async def slurprot(ctx):
+    if not user_has_role(ctx.author, MOD_ROLE_ID):
+        return
+
+    json = get_json("general_info.json")
+    json["slurprot"] = not json["slurprot"]
+    if (not json["slurprot"]):
+        write_json("general_info.json", json)
+        await ctx.channel.send("Slur protection turned off")
+    else:
+        write_json("general_info.json", json)
+        await ctx.channel.send("Slur protection turned on")
 
 @bot.command()
 async def info(ctx, *, topic):
@@ -182,17 +195,15 @@ class ReportSlurDetection(discord.ui.View):
         await interaction.response.send_message("Successfully reported")
 
 async def check_for_slurs(message):
+    if not get_json("general_info.json")["slurprot"]: return
     if message.author.bot: return
+    content = message.content
 
-    results = Detoxify("unbiased").predict(message.content)
-    if (results["identity_attack"] >= 0.5):
-        with open("src/data/bad_words.txt", "r") as f:
-            for line in f.readlines():
-                if line.strip() in message.content:
-                    await message.delete()
-                    await message.author.send(
-                        f"""Your message '{message.content}' has been flagged for being offensive.
-If you believe this to be a mistake please press the button below""", view=ReportSlurDetection(message.content))
+    with open("src/data/bad_words.txt") as f:
+        for line in f.readlines():
+            line = line.strip()
+            if f" {line}" in content or f"{line} " in content or line == content:
+                await message.delete()
 
 @bot.event
 async def on_message(message):
