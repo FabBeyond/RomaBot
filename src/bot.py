@@ -197,7 +197,7 @@ class ReportSlurDetection(discord.ui.View):
 async def check_for_slurs(message):
     if not get_json("general_info.json")["slurprot"]: return
     if message.author.bot: return
-    content = message.content
+    content = message.content.lower()
 
     with open("src/data/bad_words.txt") as f:
         for line in f.readlines():
