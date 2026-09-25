@@ -203,7 +203,7 @@ async def check_for_slurs(message):
     with open("src/data/bad_words.txt") as f:
         for line in f.readlines():
             line = line.strip()
-            if f" {line}" in content or f"{line} " in content or line == content:
+            if f" {line} " in content or line == content:
                 await message.delete()
 
 @bot.event
